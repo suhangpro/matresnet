@@ -4,16 +4,22 @@ opts.modelType = 'plain' ;
 [opts, varargin] = vl_argparse(opts, varargin) ;
 
 opts.expDir = fullfile('exp', ...
-  sprintf('cifar-%s', opts.modelType)) ;
+  sprintf('cifar-%s-%d', opts.modelType,n)) ;
 opts.dataDir = fullfile('data','cifar') ;
 [opts, varargin] = vl_argparse(opts, varargin) ;
 
 opts.imdbPath = fullfile(opts.dataDir, 'imdb.mat');
-opts.whitenData = true ;
-opts.contrastNormalization = true ;
-opts.train = struct() ;
+opts.whitenData = false;
+opts.contrastNormalization = false;
+opts.meanType = 'pixel'; % 'pixel' | 'image'
+opts.border = [4 4 4 4]; % tblr
+opts.gpus = []; 
 opts = vl_argparse(opts, varargin) ;
-if ~isfield(opts.train, 'gpus'), opts.train.gpus = []; end;
+
+if numel(opts.border)~=4, 
+  assert(numel(opts.border)==1);
+  opts.border = ones(1,4) * opts.border;
+end
 
 % -------------------------------------------------------------------------
 %                                                    Prepare model and data
@@ -30,36 +36,57 @@ end
 
 if exist(opts.imdbPath, 'file')
   imdb = load(opts.imdbPath) ;
-else
+  if ~strcmpi(imdb.meta.meanType, opts.meanType) ...
+    || xor(imdb.meta.whitenData, opts.whitenData) ...
+    || xor(imdb.meta.contrastNormalization, opts.contrastNormalization);
+    clear imdb;  
+  end
+end
+if ~exist('imdb', 'var'), 
   imdb = getCifarImdb(opts) ;
   mkdir(opts.expDir) ;
   save(opts.imdbPath, '-struct', 'imdb') ;
 end
 
 net.meta.classes.name = imdb.meta.classes(:)' ;
+net.meta.dataMean = imdb.meta.dataMean; 
+augData = zeros(size(imdb.images.data) + [sum(opts.border(1:2)) ...
+  sum(opts.border(3:4)) 0 0], 'like', imdb.images.data); 
+augData(opts.border(1)+1:end-opts.border(2), ...
+  opts.border(3)+1:end-opts.border(4), :, :) = imdb.images.data; 
+imdb.images.augData = augData; 
 
 % -------------------------------------------------------------------------
 %                                                                     Train
 % -------------------------------------------------------------------------
 
-trainfn = @cnn_train_dag ;
+trainfn = @cnn_train_dag;
 
 [net, info] = trainfn(net, imdb, getBatch(opts), ...
   'expDir', opts.expDir, ...
   net.meta.trainOpts, ...
-  opts.train, ...
-  'val', find(imdb.images.set == 3)) ;
+  'gpus', opts.gpus, ...
+  'val', find(imdb.images.set == 3), ...
+  'derOutputs', {'loss', 1}) ;
 
 % -------------------------------------------------------------------------
 function fn = getBatch(opts)
 % -------------------------------------------------------------------------
-bopts = struct('numGpus', numel(opts.train.gpus)) ;
+bopts = struct('numGpus', numel(opts.gpus)) ;
 fn = @(x,y) getDagNNBatch(bopts,x,y) ;
 
 % -------------------------------------------------------------------------
 function inputs = getDagNNBatch(opts, imdb, batch)
 % -------------------------------------------------------------------------
-images = imdb.images.data(:,:,:,batch) ;
+if imdb.images.set(batch(1))==1,  % training
+  sz0 = size(imdb.images.augData);
+  sz = size(imdb.images.data);
+  loc = [randi(sz0(1)-sz(1)+1) randi(sz0(2)-sz(2)+1)];
+  images = imdb.images.augData(loc(1):loc(1)+sz(1)-1, ...
+    loc(2):loc(2)+sz(2)-1, :, batch); 
+else                              % validating / testing
+  images = imdb.images.data(:,:,:,batch); 
+end
 labels = imdb.images.labels(1,batch) ;
 if rand > 0.5, images=fliplr(images) ; end
 if opts.numGpus > 0
@@ -96,8 +123,13 @@ end
 set = cat(2, sets{:});
 data = single(cat(4, data{:}));
 
-% remove mean in any case
+% remove mean
 dataMean = mean(data(:,:,:,set == 1), 4);
+if strcmpi(opts.meanType, 'pixel'), 
+  dataMean = mean(mean(dataMean, 1), 2); 
+elseif ~strcmpi(opts.meanType, 'image'), 
+  error('Unknown option: %s', opts.meanType); 
+end
 data = bsxfun(@minus, data, dataMean);
 
 % normalize by image mean and std as suggested in `An Analysis of
@@ -130,3 +162,7 @@ imdb.images.labels = single(cat(2, labels{:})) ;
 imdb.images.set = set;
 imdb.meta.sets = {'train', 'val', 'test'} ;
 imdb.meta.classes = clNames.label_names;
+imdb.meta.dataMean = dataMean;
+imdb.meta.meanType = opts.meanType; 
+imdb.meta.whitenData = opts.whitenData;
+imdb.meta.contrastNormalization = opts.contrastNormalization;
