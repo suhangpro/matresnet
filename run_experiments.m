@@ -1,14 +1,20 @@
-function run_experiments(Ns, MTs, gpus)
-% usage example: run_experiments([3 5 7 9], 'plain', [1]); 
+function run_experiments(Ns, MTs, varargin)
+% Usage example: run_experiments([3 5 7 9], 'plain', 'gpus', [1]); 
+% Options: 
+%   'bn'[true], 'gpus'[[]], 'border'[[4 4 4 4]], 'meanType'['image'], 
+%   'whitenData'[true], 'contrastNormalization'[true]
+%   and more defined in cnn_cifar.m
 
 setup;
 
+opts.bn = true;
 opts.meanType = 'image';
 opts.whitenData = true;
 opts.contrastNormalization = true; 
 opts.border = [4 4 4 4];
-opts.gpus = gpus;
+opts.gpus = [];
 
+opts = vl_argparse(opts, varargin); 
 
 n_exp = numel(Ns); 
 if ischar(MTs) || numel(MTs)==1, 

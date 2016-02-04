@@ -9,9 +9,10 @@ opts.dataDir = fullfile('data','cifar') ;
 [opts, varargin] = vl_argparse(opts, varargin) ;
 
 opts.imdbPath = fullfile(opts.dataDir, 'imdb.mat');
-opts.whitenData = false;
-opts.contrastNormalization = false;
-opts.meanType = 'pixel'; % 'pixel' | 'image'
+opts.bn = true;
+opts.whitenData = true;
+opts.contrastNormalization = true;
+opts.meanType = 'image'; % 'pixel' | 'image'
 opts.border = [4 4 4 4]; % tblr
 opts.gpus = []; 
 opts = vl_argparse(opts, varargin) ;
@@ -25,14 +26,8 @@ end
 %                                                    Prepare model and data
 % -------------------------------------------------------------------------
 
-switch opts.modelType
-  case 'plain'
-    net = cnn_cifar_init_plain(n) ;
-  case 'resnet'
-    net = cnn_cifar_init_resnet(n) ;
-  otherwise
-    error('Unknown model type ''%s''.', opts.modelType) ;
-end
+net = cnn_cifar_init(n, 'networkType', opts.modelType, ...
+  'batchNormalization', opts.bn) ;
 
 if exist(opts.imdbPath, 'file')
   imdb = load(opts.imdbPath) ;
