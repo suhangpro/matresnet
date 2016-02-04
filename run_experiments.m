@@ -1,12 +1,13 @@
 function run_experiments(Ns, MTs, varargin)
 % Usage example: run_experiments([3 5 7 9], 'plain', 'gpus', [1]); 
 % Options: 
-%   'bn'[true], 'gpus'[[]], 'border'[[4 4 4 4]], 'meanType'['image'], 
-%   'whitenData'[true], 'contrastNormalization'[true]
+%   'expDir'['exp'], 'bn'[true], 'gpus'[[]], 'border'[[4 4 4 4]], 
+%   'meanType'['image'], 'whitenData'[true], 'contrastNormalization'[true]
 %   and more defined in cnn_cifar.m
 
 setup;
 
+opts.expDir = 'exp';
 opts.bn = true;
 opts.meanType = 'image';
 opts.whitenData = true;
@@ -24,6 +25,9 @@ else
   assert(numel(MTs)==n_exp);
 end
 
+expRoot = opts.expDir; 
 for i=1:n_exp, 
+  opts.expDir = fullfile(expRoot, ...
+    sprintf('cifar-%s-%d', MTs{i}, Ns(i))); 
   [net,info] = cnn_cifar(Ns(i), 'modelType', MTs{i}, opts); 
 end
