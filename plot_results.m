@@ -2,7 +2,7 @@ function plot_results(expDir, savePath)
 % Usage example: plot_results('exp', 'exp/summary.pdf');
 
 if nargin==1, savePath = expDir; end
-if strfind(savePath,'.pdf')~=numel(savePath)-3, 
+if isempty(strfind(savePath,'.pdf')) || strfind(savePath,'.pdf')~=numel(savePath)-3, 
   savePath = fullfile(savePath,'summary.pdf');
 end
 
