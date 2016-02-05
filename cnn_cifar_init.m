@@ -8,10 +8,14 @@ net = dagnn.DagNN();
 
 % Meta parameters
 net.meta.inputSize = [32 32 3] ;
-net.meta.trainOpts.learningRate = [0.1*ones(1,80) 0.01*ones(1,40) 0.001*ones(1,40)] ;
 net.meta.trainOpts.weightDecay = 0.0001 ;
 net.meta.trainOpts.momentum = 0.9;
 net.meta.trainOpts.batchSize = 128 ;
+if opts.batchNormalization; 
+  net.meta.trainOpts.learningRate = [0.1*ones(1,80) 0.01*ones(1,40) 0.001*ones(1,40)] ;
+else
+  net.meta.trainOpts.learningRate = [0.01*ones(1,80) 0.001*ones(1,80) 0.0001*ones(1,40)] ;
+end
 net.meta.trainOpts.numEpochs = numel(net.meta.trainOpts.learningRate) ;
 
 % First conv layer

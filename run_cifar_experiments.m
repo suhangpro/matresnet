@@ -1,5 +1,5 @@
-function run_experiments(Ns, MTs, varargin)
-% Usage example: run_experiments([3 5 7 9], 'plain', 'gpus', [1]); 
+function run_cifar_experiments(Ns, MTs, varargin)
+% Usage example: run_cifar_experiments([3 5 7 9], 'plain', 'gpus', [1]); 
 % Options: 
 %   'expDir'['exp'], 'bn'[true], 'gpus'[[]], 'border'[[4 4 4 4]], 
 %   'meanType'['image'], 'whitenData'[true], 'contrastNormalization'[true]
