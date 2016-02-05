@@ -26,6 +26,8 @@ else
 end
 
 expRoot = opts.expDir; 
+opts.checkpointFn = @() plot_results(expRoot);
+
 for i=1:n_exp, 
   opts.expDir = fullfile(expRoot, ...
     sprintf('cifar-%s-%d', MTs{i}, Ns(i))); 

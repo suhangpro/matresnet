@@ -15,6 +15,7 @@ opts.contrastNormalization = true;
 opts.meanType = 'image'; % 'pixel' | 'image'
 opts.border = [4 4 4 4]; % tblr
 opts.gpus = []; 
+opts.checkpointFn = [];
 opts = vl_argparse(opts, varargin) ;
 
 if numel(opts.border)~=4, 
@@ -62,7 +63,8 @@ trainfn = @cnn_train_dag;
   net.meta.trainOpts, ...
   'gpus', opts.gpus, ...
   'val', find(imdb.images.set == 3), ...
-  'derOutputs', {'loss', 1}) ;
+  'derOutputs', {'loss', 1}, ...
+  'checkpointFn', opts.checkpointFn) ;
 
 % -------------------------------------------------------------------------
 function fn = getBatch(opts)
