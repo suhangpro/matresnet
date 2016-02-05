@@ -2,7 +2,7 @@ function plot_results(expDir, savePath)
 % Usage example: plot_results('exp', 'exp/summary.pdf');
 
 if nargin==1, savePath = expDir; end
-if strfind(savePath,'.pdf')==numel(savePath)-3, 
+if strfind(savePath,'.pdf')~=numel(savePath)-3, 
   savePath = fullfile(savePath,'summary.pdf');
 end
 
@@ -39,7 +39,7 @@ for p = plots
   set(gca,'YGrid','on');
 end
 drawnow ;
-print(1, fullfile(savePath,'summary.pdf'), '-dpdf') ;
+print(1, savePath, '-dpdf') ;
 end
 
 function epoch = findLastCheckpoint(modelDir)
