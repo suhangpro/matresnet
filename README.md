@@ -8,8 +8,11 @@ cd matresnet/
 matlab -nodisplay -r "setup(true,struct('enableGpu',true,'enableCudnn',true));exit;"
 ```
 
-### Run experiments on Cifar10
+### Experiments on Cifar10
 ```matlab
-matlab>> run_cifar_experiments([9],'resnet','gpus',[1]);
+matlab>> % plain network w/ 20, 32, 44, 56 layers
+matlab>> run_cifar_experiments([3 5 7 9], 'plain', 'gpus', [1]);
+matlab>> % ResNet w/ 20, 32, 44, 56, 110 layers
+matlab>> run_cifar_experiments([3 5 7 9 18], 'resnet', 'gpus', [1]);
 ```
 ![results](http://maxwell.cs.umass.edu/hsu/summary.png)

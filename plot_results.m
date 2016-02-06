@@ -1,9 +1,10 @@
-function plot_results(expDir, savePath)
-% Usage example: plot_results('exp', 'exp/summary.pdf');
+function plot_results(expDir, datasetName, savePath)
+% Usage example: plot_results('exp', 'cifar', 'exp/summary.pdf');
 
-if nargin==1, savePath = expDir; end
+if nargin<=2, savePath = expDir; end
+if nargin<=1, datasetName = 'cifar'; end
 if isempty(strfind(savePath,'.pdf')) || strfind(savePath,'.pdf')~=numel(savePath)-3, 
-  savePath = fullfile(savePath,'summary.pdf');
+  savePath = fullfile(savePath,'cifar-summary.pdf');
 end
 
 plots = {'plain', 'resnet'}; 
@@ -11,22 +12,22 @@ figure(1) ; clf ;
 cmap = lines;
 for p = plots
   p = char(p) ;
-  list = dir(fullfile(expDir,sprintf('cifar-%s-*',p)));
-  tokens = regexp({list.name}, sprintf('cifar-%s-([\\d]+)',p), 'tokens'); 
+  list = dir(fullfile(expDir,sprintf('%s-%s-*',datasetName,p)));
+  tokens = regexp({list.name}, sprintf('%s-%s-([\\d]+)',datasetName,p), 'tokens'); 
   Ns = cellfun(@(x) sscanf(x{1}{1}, '%d'), tokens);
   Ns = sort(Ns); 
   subplot(1,numel(plots),find(strcmp(p,plots)));
   hold on;
-  leg = {}; 
-  Hs = [];
+  leg = {}; Hs = []; nEpoches = 0;
   for n=Ns,
-    tmpDir = fullfile(expDir,sprintf('cifar-%s-%d',p,n));
+    tmpDir = fullfile(expDir,sprintf('%s-%s-%d',datasetName,p,n));
     epoch = findLastCheckpoint(tmpDir);
     if epoch==0, continue; end
     load(fullfile(tmpDir,sprintf('net-epoch-%d.mat',epoch)),'stats');
     plot([stats.train.error]*100, ':','Color',cmap(find(Ns==n),:),'LineWidth',1.5); 
     Hs(end+1) = plot([stats.val.error]*100, '-','Color',cmap(find(Ns==n),:),'LineWidth',1.5); 
     leg{end+1} = sprintf('%s-%d',p,6*n+2);
+    if numel(stats.train)>nEpoches, nEpoches = numel(stats.train); end
   end
   xlabel('epoch') ;
   ylabel('error (%)');
@@ -35,7 +36,7 @@ for p = plots
 %  axis square; 
 %  ylim([0 25]);
   ylim([0 75]);
-  xlim([1 160]);
+  xlim([1 nEpoches]);
   set(gca,'YGrid','on');
 end
 drawnow ;
