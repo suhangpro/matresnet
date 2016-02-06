@@ -70,6 +70,8 @@ end
 net.addLayer('softmax', dagnn.SoftMax(), lName, 'softmax');  
 net.addLayer('loss', dagnn.Loss('loss', 'log'), {'softmax', 'label'}, 'loss');
 net.addLayer('error', dagnn.Loss('loss', 'classerror'), {'softmax','label'}, 'error') ;
+net.addLayer('error5', dagnn.Loss('loss', 'topkerror', 'opts', {'topK', 5}), ...
+  {'softmax','label'}, 'error5') ;
 
 net.initParams();
 
@@ -143,7 +145,7 @@ if stride>1,
   pidx = net.getParamIndex([lName0 '_f']);
   net.params(pidx).learningRate = 0;
 end
-if f_size(3)==f_size(4), 
+if f_size(3)==info.lastNumChannel, 
   net.addLayer(sprintf('sum%04d',info.lastIdx), dagnn.Sum(), {lName0,lName1}, ...
     sprintf('sum%04d',info.lastIdx));
 else
