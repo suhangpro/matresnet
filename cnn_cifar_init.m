@@ -4,6 +4,8 @@ opts.batchNormalization = true;
 opts.networkType = 'resnet'; % 'plain' | 'resnet'
 opts = vl_argparse(opts, varargin); 
 
+nClasses = 10;
+
 net = dagnn.DagNN();
 
 % Meta parameters
@@ -33,13 +35,13 @@ info = add_group(opts.networkType, net, n, info, 3, 64, 2, opts.batchNormalizati
 block = dagnn.Pooling('poolSize', [8 8], 'method', 'avg', 'pad', 0, 'stride', 1);
 net.addLayer('pool_final', block, sprintf('relu%04d',info.lastIdx), 'pool_final');
 
-block = dagnn.Conv('size', [1 1 info.lastNumChannel 10], 'hasBias', true, ...
+block = dagnn.Conv('size', [1 1 info.lastNumChannel nClasses], 'hasBias', true, ...
                    'stride', 1, 'pad', 0);
 lName = sprintf('fc%04d', info.lastIdx+1);
 net.addLayer(lName, block, 'pool_final', lName, {[lName '_f'], [lName '_b']});
 
 if opts.batchNormalization, % TODO confirm this is needed
-  add_layer_bn(net, 10, lName, strrep(lName,'fc','bn'), 0.1); 
+  add_layer_bn(net, nClasses, lName, strrep(lName,'fc','bn'), 0.1); 
   lName = strrep(lName, 'fc', 'bn'); 
 end
 

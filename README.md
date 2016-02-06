@@ -12,4 +12,4 @@ matlab -nodisplay -r "setup(true,struct('enableGpu',true,'enableCudnn',true));ex
 ```matlab
 matlab>> run_cifar_experiments([9],'resnet','gpus',[1]);
 ```
-[results](https://www.dropbox.com/s/ae07zxh384ikr89/summary.pdf?dl=0)
+![results](http://maxwell.cs.umass.edu/hsu/summary.png)
